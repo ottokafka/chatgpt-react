@@ -1,7 +1,8 @@
 const OpenAI = require('openai');
+const BASE_URL = process.env.REACT_APP_BASE_URL;
+const API_KEY = process.env.REACT_APP_API_KEY;
 
 export const sendMsgToAI = async (messages, stream = false) => {
-  const BASE_URL = process.env.BASE_URL;
 
   const openai = new OpenAI({ baseURL: BASE_URL, apiKey: API_KEY, dangerouslyAllowBrowser: true });
 
