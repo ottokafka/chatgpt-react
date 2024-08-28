@@ -9,8 +9,8 @@ npm install
 npm start
 
 // Create a .env file
-BASE_URL="https://api.openai.com/v1/"
-API_KEY="sk-kjh32lkjh2lk3jh2l3kjh23lkjh
+REACT_APP_BASE_URL="https://api.openai.com/v1/"
+REACT_APP_API_KEY="sk-kjh32lkjh2lk3jh2l3kjh23lkjh
 ```
 
 ## Features
