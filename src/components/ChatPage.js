@@ -63,7 +63,7 @@ function ChatPage() {
           />
         </span>
         <p className="lg:text-xs text-gray-400 text-center text-[10px]">
-          Open Source
+          Alice Ai - Llama 3.1 8b
         </p>
       </div>
     </div>

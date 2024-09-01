@@ -2,9 +2,10 @@ import React, { useContext } from "react";
 import { FiMessageSquare, FiEdit, FiImage } from "react-icons/fi";
 import { SlOptions } from "react-icons/sl";
 import { MdClose } from "react-icons/md";
+import { NavLink } from "react-router-dom";
 import { ContextApp } from "../utils/Context";
 
-function Sidebar() {
+function ChatSidebar() {
   const {
     setShowSlide,
     showSlide,
@@ -23,7 +24,7 @@ function Sidebar() {
     if (isMobileView) {
       setMobile(false);
     } else {
-      setShowSlide(true); // Set to true to hide the sidebar on desktop
+      setShowSlide(true);
     }
   };
 
@@ -85,7 +86,13 @@ function Sidebar() {
             <SlOptions />
           </span>
         </span>
-        <span className="rounded w-full py-2 px-2 text-xs flex gap-1 items-center justify-between cursor-pointer hover:bg-gray-800 transition-all duration-300">
+        <NavLink
+          to="/image-generator"
+          className={({ isActive }) =>
+            `w-full rounded py-2 px-2 text-xs flex gap-1 items-center justify-between cursor-pointer hover:bg-gray-800 transition-all duration-300 ${isActive ? 'bg-gray-700' : ''
+            }`
+          }
+        >
           <span className="flex gap-1 items-center justify-center text-sm">
             <FiImage />
             Image Generator
@@ -93,10 +100,10 @@ function Sidebar() {
           <span className="rounded-md bg-green-200 px-1.5 py-0.5 text-xs font-medium uppercase text-gray-800">
             NEW
           </span>
-        </span>
+        </NavLink>
       </div>
     </div>
   );
 }
 
-export default Sidebar;
+export default ChatSidebar;

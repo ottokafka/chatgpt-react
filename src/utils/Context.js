@@ -14,6 +14,7 @@ const AppContext = ({ children }) => {
   const [editingMessageId, setEditingMessageId] = useState(null);
 
   useEffect(() => {
+    if (!msgEnd.current) return;
     msgEnd.current.scrollIntoView();
   }, [displayMessages]);
 

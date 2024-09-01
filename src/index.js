@@ -1,34 +1,48 @@
-import React, { useContext } from "react";
+import React from "react";
 import ReactDOM from "react-dom/client";
-import Sidebar from "./components/Sidebar";
+import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
+import ChatSidebar from "./components/ChatSidebar";
 import ChatPage from "./components/ChatPage";
-import AppContext, { ContextApp } from "./utils/Context";
+import ImageGenerator from "./components/ImagePage";
+import AppContext from "./utils/Context";
+import { ImageProvider } from "./utils/ImageContext";
 import "./index.css";
 
-function App() {
-  const { Mobile, setMobile } = useContext(ContextApp);
-
-  return (
-    <div className="overflow-hidden">
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: (
       <div className="flex w-screen relative">
-        <Sidebar />
-        <ChatPage />
-        {Mobile && (
-          <div
-            className="absolute inset-0 bg-black/40 z-40"
-            onClick={() => setMobile(false)}
-          />
-        )}
+        <ChatSidebar />
+        <Outlet />
       </div>
-    </div>
+    ),
+    children: [
+      {
+        index: true,
+        element: <ChatPage />,
+      },
+    ],
+  },
+  {
+    path: "/image-generator",
+    element: <ImageGenerator />,
+  },
+]);
+
+function App() {
+  return (
+    <AppContext>
+      <ImageProvider>
+        <RouterProvider router={router} />
+      </ImageProvider>
+    </AppContext>
   );
 }
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
-    <AppContext>
-      <App />
-    </AppContext>
+    <App />
   </React.StrictMode>
 );
