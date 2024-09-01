@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { FiMessageSquare, FiEdit } from "react-icons/fi";
+import { FiMessageSquare, FiEdit, FiImage } from "react-icons/fi";
 import { SlOptions } from "react-icons/sl";
 import { MdClose } from "react-icons/md";
 import { ContextApp } from "../utils/Context";
@@ -15,6 +15,7 @@ function Sidebar() {
     startNewConversation,
     loadConversation
   } = useContext(ContextApp);
+  const name = localStorage.getItem('name')
 
   const isMobileView = Mobile;
 
@@ -78,10 +79,19 @@ function Sidebar() {
               alt="user"
               className="w-8 h-8 object-cover rounded-sm"
             />
-            User
+            User: {name}
           </span>
           <span className="rounded-md px-1.5 py-0.5 text-xs font-medium uppercase text-gray-500">
             <SlOptions />
+          </span>
+        </span>
+        <span className="rounded w-full py-2 px-2 text-xs flex gap-1 items-center justify-between cursor-pointer hover:bg-gray-800 transition-all duration-300">
+          <span className="flex gap-1 items-center justify-center text-sm">
+            <FiImage />
+            Image Generator
+          </span>
+          <span className="rounded-md bg-green-200 px-1.5 py-0.5 text-xs font-medium uppercase text-gray-800">
+            NEW
           </span>
         </span>
       </div>

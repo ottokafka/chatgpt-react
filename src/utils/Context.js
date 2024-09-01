@@ -104,7 +104,7 @@ const AppContext = ({ children }) => {
     setIsStreaming(true);
 
     try {
-      const stream = await sendMsgToAI(updatedConversation.messages, true);
+      const stream = await sendMsgToAI(updatedConversation, true);
       await handleStreamingResponse(stream, updatedConversation);
     } catch (error) {
       console.error("Error in sending message:", error);

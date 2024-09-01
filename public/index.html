@@ -8,21 +8,66 @@
   <meta name="theme-color" content="#000000" />
   <meta name="description" content="Web site created using create-react-app" />
   <title>ChatGPT React</title>
+  <style>
+    #authOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+  </style>
 </head>
 
 <body>
   <noscript>You need to enable JavaScript to run this app.</noscript>
+  <div id="authOverlay">Checking environment...</div>
   <div id="root"></div>
-  <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
 
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
+  <script>
+    async function checkEnvironmentAndAuth() {
+      const authOverlay = document.getElementById('authOverlay');
+      const isDevelopment = window.location.hostname === 'localhost' && window.location.port === '3000';
 
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
+      if (isDevelopment) {
+        // In development mode, skip authentication
+        localStorage.setItem('name', 'Otto');
+        authOverlay.style.display = 'none';
+        console.log('Development mode: Skipping authentication');
+        return;
+      }
+
+      // Production mode: check authentication
+      try {
+        const response = await fetch('/auth/authenticated');
+        const data = await response.json();
+
+        if (data.token) {
+          localStorage.setItem('name', data.name);
+          localStorage.setItem('token', data.token)
+          // User is authenticated, remove overlay and allow React app to render
+          authOverlay.style.display = 'none';
+        } else {
+          // User is not authenticated, redirect to Azure SSO login
+          authOverlay.textContent = 'Redirecting to login...';
+          window.location.href = '/auth/signin';
+        }
+      } catch (error) {
+        console.error('Authentication check failed:', error);
+        authOverlay.textContent = 'Authentication check failed. Please refresh the page.';
+      }
+    }
+
+    // Check environment and authentication when the page loads
+    document.addEventListener('DOMContentLoaded', checkEnvironmentAndAuth);
+  </script>
+
+  <!-- The React app will be injected here during the build process -->
 </body>
 
 </html>
