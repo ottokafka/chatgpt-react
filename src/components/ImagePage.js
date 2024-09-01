@@ -106,10 +106,10 @@ const ImagePage = () => {
     );
 
     return (
-        <div className="flex h-screen bg-gray-900">
+        <div className="flex flex-col h-screen bg-gray-900 md:flex-row">
             <ImageSidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-            <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? 'ml-80' : 'ml-0'}`}>
-                <div className="flex-1 overflow-y-auto p-6">
+            <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? 'md:ml-80' : 'md:ml-0'}`}>
+                <div className="flex-1 overflow-y-auto p-4 md:p-6">
                     <div className="mb-6 flex flex-col items-center justify-center">
                         {isLoading ? (
                             <div className="loader text-white">Loading...</div>
@@ -128,7 +128,7 @@ const ImagePage = () => {
                         )}
                     </div>
                 </div>
-                <div>
+                <div className="p-4 md:p-6">
                     <div className="flex flex-col max-w-3xl mx-auto">
                         <div className="relative">
                             <textarea
@@ -146,7 +146,7 @@ const ImagePage = () => {
                                 <RiSendPlane2Fill size={24} />
                             </button>
                         </div>
-                        <div className="flex justify-center p-2 ">
+                        <div className="flex justify-center p-2 flex-wrap">
                             {['small', 'medium', 'large'].map(buildSizeOption)}
                         </div>
                     </div>
