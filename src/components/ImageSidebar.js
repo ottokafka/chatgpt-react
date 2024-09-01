@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { FiTrash2, FiDownload, FiX, FiMessageSquare, FiMenu, FiArrowLeft } from 'react-icons/fi';
-import { SlOptions } from 'react-icons/sl';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FiTrash2, FiDownload, FiArrowLeft, FiMenu } from 'react-icons/fi';
 import { useImageContext } from '../utils/ImageContext';
 
 const ImageSidebar = ({ isOpen, toggleSidebar }) => {
@@ -17,9 +16,31 @@ const ImageSidebar = ({ isOpen, toggleSidebar }) => {
         setSelectedImage(image);
     };
 
-    const closeFullImage = () => {
+    const closeFullImage = useCallback(() => {
         setSelectedImage(null);
-    };
+    }, []);
+
+    const handleOverlayClick = useCallback((e) => {
+        if (e.target === e.currentTarget) {
+            closeFullImage();
+        }
+    }, [closeFullImage]);
+
+    useEffect(() => {
+        const handleEscKey = (e) => {
+            if (e.key === 'Escape') {
+                closeFullImage();
+            }
+        };
+
+        if (selectedImage) {
+            document.addEventListener('keydown', handleEscKey);
+        }
+
+        return () => {
+            document.removeEventListener('keydown', handleEscKey);
+        };
+    }, [selectedImage, closeFullImage]);
 
     const downloadImage = (image, e) => {
         e.stopPropagation();
@@ -29,6 +50,14 @@ const ImageSidebar = ({ isOpen, toggleSidebar }) => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+    };
+
+    const handleDeleteImage = (imageId, e) => {
+        e.stopPropagation();
+        deleteImage(imageId);
+        if (selectedImage && selectedImage.id === imageId) {
+            closeFullImage();
+        }
     };
 
     const handleBackClick = () => {
@@ -50,7 +79,7 @@ const ImageSidebar = ({ isOpen, toggleSidebar }) => {
                         className="text-white p-2 rounded-full hover:bg-gray-800"
                         onClick={toggleSidebar}
                     >
-                        <FiX size={24} />
+                        <FiMenu size={24} />
                     </button>
                 </div>
                 <div className="flex-grow overflow-y-auto">
@@ -65,22 +94,21 @@ const ImageSidebar = ({ isOpen, toggleSidebar }) => {
                                 alt={image.prompt}
                                 className="w-full h-auto rounded"
                             />
-                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        deleteImage(image.id);
-                                    }}
-                                    className="text-white bg-red-500 p-2 rounded-full mr-2"
-                                >
-                                    <FiTrash2 />
-                                </button>
-                                <button
-                                    onClick={(e) => downloadImage(image, e)}
-                                    className="text-white bg-green-500 p-2 rounded-full"
-                                >
-                                    <FiDownload />
-                                </button>
+                            <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="absolute bottom-2 right-2 flex">
+                                    <button
+                                        onClick={(e) => handleDeleteImage(image.id, e)}
+                                        className="text-white bg-red-500 p-1 rounded-full mr-4"
+                                    >
+                                        <FiTrash2 size={16} />
+                                    </button>
+                                    <button
+                                        onClick={(e) => downloadImage(image, e)}
+                                        className="text-white bg-green-500 p-1 rounded-full"
+                                    >
+                                        <FiDownload size={16} />
+                                    </button>
+                                </div>
                             </div>
                             <p className="text-sm mt-1 truncate">{image.prompt}</p>
                         </div>
@@ -96,25 +124,30 @@ const ImageSidebar = ({ isOpen, toggleSidebar }) => {
                 </button>
             )}
             {selectedImage && (
-                <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+                <div
+                    className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+                    onClick={handleOverlayClick}
+                >
                     <div className="relative max-w-4xl max-h-screen">
                         <img
                             src={`data:image/png;base64,${selectedImage.base64}`}
                             alt={selectedImage.prompt}
                             className="max-w-full max-h-screen"
                         />
-                        <button
-                            onClick={closeFullImage}
-                            className="absolute top-4 right-4 text-white bg-black p-2 rounded-full"
-                        >
-                            <FiX />
-                        </button>
-                        <button
-                            onClick={(e) => downloadImage(selectedImage, e)}
-                            className="absolute bottom-4 right-4 text-white bg-green-500 p-2 rounded-full"
-                        >
-                            <FiDownload />
-                        </button>
+                        <div className="absolute bottom-4 right-4 flex">
+                            <button
+                                onClick={(e) => handleDeleteImage(selectedImage.id, e)}
+                                className="text-white bg-red-500 p-2 rounded-full mr-2"
+                            >
+                                <FiTrash2 size={24} />
+                            </button>
+                            <button
+                                onClick={(e) => downloadImage(selectedImage, e)}
+                                className="text-white bg-green-500 p-2 rounded-full"
+                            >
+                                <FiDownload size={24} />
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useImageContext } from '../utils/ImageContext';
 import ImageSidebar from './ImageSidebar';
-import { RiSendPlane2Fill, RiDownload2Fill } from 'react-icons/ri';
+import { RiSendPlane2Fill } from 'react-icons/ri';
+import { FiDownload } from 'react-icons/fi'
 
 const ImagePage = () => {
     const [base64Image, setBase64Image] = useState('');
@@ -117,9 +118,9 @@ const ImagePage = () => {
                                 <img src={`data:image/png;base64,${base64Image}`} alt="Generated" className="max-w-full h-auto mb-4 rounded-lg shadow-lg" />
                                 <button
                                     onClick={downloadImage}
-                                    className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition-colors"
+                                    className="bg-green-500 text-white p-2 rounded hover:bg-blue-600 transition-colors"
                                 >
-                                    <RiDownload2Fill size={24} />
+                                    <FiDownload size={24} />
                                 </button>
                             </>
                         ) : (
