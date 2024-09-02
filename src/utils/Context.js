@@ -2,6 +2,25 @@ import { createContext, useEffect, useRef, useState, useCallback } from "react";
 import { sendMsgToAI } from "./OpenAi";
 export const ContextApp = createContext();
 
+const DB_NAME = 'ChatAppDB';
+const STORE_NAME = 'conversations';
+const DB_VERSION = 1;
+
+const openDB = () => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onerror = (event) => reject("IndexedDB error: " + event.target.error);
+
+    request.onsuccess = (event) => resolve(event.target.result);
+
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      db.createObjectStore(STORE_NAME, { keyPath: "uuid" });
+    };
+  });
+};
+
 const AppContext = ({ children }) => {
   const [showSlide, setShowSlide] = useState(false);
   const [Mobile, setMobile] = useState(false);
@@ -12,25 +31,57 @@ const AppContext = ({ children }) => {
   const [currentConversation, setCurrentConversation] = useState(null);
   const msgEnd = useRef(null);
   const [editingMessageId, setEditingMessageId] = useState(null);
+  const [db, setDb] = useState(null);
+
+  useEffect(() => {
+    const initDB = async () => {
+      try {
+        const database = await openDB();
+        setDb(database);
+        await loadConversationsFromDB(database);
+      } catch (error) {
+        console.error("Error initializing IndexedDB:", error);
+      }
+    };
+
+    initDB();
+
+    return () => {
+      if (db) db.close();
+    };
+    // eslint-disable-next-line
+  }, []);
+
+  const loadConversationsFromDB = useCallback(async (database) => {
+    const transaction = database.transaction(STORE_NAME, "readonly");
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.getAll();
+
+    request.onsuccess = (event) => {
+      setConversationHistory(event.target.result);
+    };
+
+    request.onerror = (event) => {
+      console.error("Error loading conversations from IndexedDB:", event.target.error);
+    };
+  }, []);
+
+  const saveConversationToDB = useCallback(async (conversation) => {
+    if (!db) return;
+
+    const transaction = db.transaction(STORE_NAME, "readwrite");
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.put(conversation);
+
+    request.onerror = (event) => {
+      console.error("Error saving conversation to IndexedDB:", event.target.error);
+    };
+  }, [db]);
 
   useEffect(() => {
     if (!msgEnd.current) return;
     msgEnd.current.scrollIntoView();
   }, [displayMessages]);
-
-  useEffect(() => {
-    // Load conversation history from localStorage on component mount
-    const storedHistory = localStorage.getItem('conversationHistory');
-    if (storedHistory) {
-      setConversationHistory(JSON.parse(storedHistory));
-    }
-  }, []);
-
-  useEffect(() => {
-    // Save conversation history to localStorage whenever it changes
-    if (conversationHistory.length === 0) return;
-    localStorage.setItem('conversationHistory', JSON.stringify(conversationHistory));
-  }, [conversationHistory]);
 
   const handleStreamingResponse = useCallback(async (stream, conversation) => {
     let newMessage = { role: "assistant", content: "", id: Date.now() };
@@ -46,7 +97,6 @@ const AppContext = ({ children }) => {
         ]);
       }
 
-      // Update conversation in history and current conversation
       const updatedMessages = [...conversation.messages, newMessage];
       const updatedConversation = { ...conversation, messages: updatedMessages };
 
@@ -57,6 +107,7 @@ const AppContext = ({ children }) => {
       );
 
       setCurrentConversation(updatedConversation);
+      await saveConversationToDB(updatedConversation);
     } catch (error) {
       console.error("Error in streaming:", error);
       setDisplayMessages(prevMessages => [
@@ -66,24 +117,22 @@ const AppContext = ({ children }) => {
     } finally {
       setIsStreaming(false);
     }
-  }, []);
+  }, [saveConversationToDB]);
 
   const handleSendMessage = useCallback(async (text) => {
     const userMessage = { role: "user", content: text, id: Date.now() };
 
     let updatedConversation;
     if (!currentConversation) {
-      // Create a new conversation
       updatedConversation = {
         uuid: Date.now().toString(),
-        name: text.slice(0, 30), // Use first 30 characters of message as name
+        name: text.slice(0, 30),
         description: text,
         messages: [userMessage],
       };
       setCurrentConversation(updatedConversation);
       setConversationHistory(prevHistory => [...prevHistory, updatedConversation]);
     } else {
-      // Update existing conversation
       updatedConversation = {
         ...currentConversation,
         messages: [...currentConversation.messages, userMessage],
@@ -95,6 +144,8 @@ const AppContext = ({ children }) => {
         )
       );
     }
+
+    await saveConversationToDB(updatedConversation);
 
     setDisplayMessages(updatedConversation.messages.map(msg => ({
       text: msg.content,
@@ -115,7 +166,7 @@ const AppContext = ({ children }) => {
       ]);
       setIsStreaming(false);
     }
-  }, [currentConversation, handleStreamingResponse]);
+  }, [currentConversation, handleStreamingResponse, saveConversationToDB]);
 
   const handleSend = useCallback(() => {
     const text = chatValue;
@@ -163,25 +214,23 @@ const AppContext = ({ children }) => {
   const saveEditedMessage = useCallback(async (editedContent) => {
     if (!editingMessageId || !currentConversation) return;
 
-    // Find the index of the edited message
     const editedIndex = currentConversation.messages.findIndex(msg => msg.id === editingMessageId);
     if (editedIndex === -1) return;
 
-    // Create a new array with messages up to and including the edited message
     const messagesBeforeEdit = currentConversation.messages.slice(0, editedIndex);
     const editedMessage = { ...currentConversation.messages[editedIndex], content: editedContent };
     const updatedMessages = [...messagesBeforeEdit, editedMessage];
 
-    // Update the current conversation
     const updatedConversation = { ...currentConversation, messages: updatedMessages };
     setCurrentConversation(updatedConversation);
 
-    // Update the conversation history
     setConversationHistory(prevHistory =>
       prevHistory.map(conv =>
         conv.uuid === currentConversation.uuid ? updatedConversation : conv
       )
     );
+
+    await saveConversationToDB(updatedConversation);
 
     setDisplayMessages(updatedMessages.map(msg => ({
       text: msg.content,
@@ -191,7 +240,6 @@ const AppContext = ({ children }) => {
 
     setEditingMessageId(null);
 
-    // Send the updated conversation to the AI
     try {
       setIsStreaming(true);
       const stream = await sendMsgToAI(updatedMessages, true);
@@ -205,9 +253,8 @@ const AppContext = ({ children }) => {
     } finally {
       setIsStreaming(false);
     }
-  }, [editingMessageId, currentConversation, setConversationHistory, handleStreamingResponse]);
+  }, [editingMessageId, currentConversation, handleStreamingResponse, saveConversationToDB]);
 
-  // Ensure editingMessageId is reset when changing conversations
   useEffect(() => {
     setEditingMessageId(null);
   }, [currentConversation]);

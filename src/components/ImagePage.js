@@ -32,6 +32,8 @@ const ImagePage = () => {
             case 'large':
                 size = '1024x1024';
                 break;
+            default:
+                size = '512x512'; // Default to medium if an unexpected value is selected
         }
 
         try {
