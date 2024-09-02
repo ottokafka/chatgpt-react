@@ -246,6 +246,7 @@ const AppContext = ({ children }) => {
       await handleStreamingResponse(stream, updatedConversation);
     } catch (error) {
       console.error("Error in sending edited message to AI:", error);
+
       setDisplayMessages(prevMessages => [
         ...prevMessages,
         { text: "An error occurred while processing your edited message.", isBot: true, id: Date.now() },
@@ -258,6 +259,30 @@ const AppContext = ({ children }) => {
   useEffect(() => {
     setEditingMessageId(null);
   }, [currentConversation]);
+
+  const deleteConversation = useCallback(async (conversationId) => {
+    if (!db) return;
+
+    try {
+      // Remove from IndexedDB
+      const transaction = db.transaction(STORE_NAME, "readwrite");
+      const store = transaction.objectStore(STORE_NAME);
+      await store.delete(conversationId);
+
+      // Remove from state
+      setConversationHistory(prevHistory =>
+        prevHistory.filter(conv => conv.uuid !== conversationId)
+      );
+
+      // If the deleted conversation was the current one, reset the current conversation
+      if (currentConversation && currentConversation.uuid === conversationId) {
+        setCurrentConversation(null);
+        setDisplayMessages([]);
+      }
+    } catch (error) {
+      console.error("Error deleting conversation:", error);
+    }
+  }, [db, currentConversation]);
 
   const contextValue = {
     showSlide,
@@ -279,7 +304,8 @@ const AppContext = ({ children }) => {
     editingMessageId,
     startEditingMessage,
     cancelEditingMessage,
-    saveEditedMessage
+    saveEditedMessage,
+    deleteConversation
   };
 
   return (
